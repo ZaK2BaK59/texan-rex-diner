@@ -79,4 +79,70 @@ const weeklyReset = async (req, res) => {
   }
 };
 
-module.exports = { createSale, getMySales, getAllSales, weeklyReset };
+
+// @desc    Modifier une vente
+// @route   PUT /api/sales/:id
+// @access  Private (propriétaire ou admin)
+const updateSale = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { productName, price } = req.body;
+    
+    const sale = await Sale.findById(id);
+    
+    if (!sale) {
+      return res.status(404).json({ success: false, message: 'Vente non trouvée' });
+    }
+    
+    // Vérifier les permissions (propriétaire ou admin)
+    if (sale.employeeId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Non autorisé à modifier cette vente' });
+    }
+    
+    // Mettre à jour
+    sale.productName = productName || sale.productName;
+    sale.price = price || sale.price;
+    
+    // Recalculer la prime si le prix a changé
+    if (price) {
+      const employee = await User.findById(sale.employeeId);
+      sale.bonusPercentage = employee.getBonusPercentage();
+      sale.bonusAmount = (sale.price * sale.bonusPercentage) / 100;
+    }
+    
+    await sale.save();
+    await sale.populate('employeeId', 'firstName lastName username role');
+    
+    res.json({ success: true, message: 'Vente modifiée', sale });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la modification' });
+  }
+};
+
+// @desc    Supprimer une vente
+// @route   DELETE /api/sales/:id
+// @access  Private (propriétaire ou admin)
+const deleteSale = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const sale = await Sale.findById(id);
+    
+    if (!sale) {
+      return res.status(404).json({ success: false, message: 'Vente non trouvée' });
+    }
+    
+    // Vérifier les permissions (propriétaire ou admin)
+    if (sale.employeeId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Non autorisé à supprimer cette vente' });
+    }
+    
+    await Sale.findByIdAndDelete(id);
+    
+    res.json({ success: true, message: 'Vente supprimée' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la suppression' });
+  }
+};
+
+module.exports = { createSale, getMySales, getAllSales, weeklyReset, updateSale, deleteSale };

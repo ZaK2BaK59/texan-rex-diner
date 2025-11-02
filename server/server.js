@@ -28,6 +28,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/sales', require('./routes/sales'));
+app.use('/api/orders', require('./routes/orders')); // ← AJOUTER CETTE LIGNE
 
 // Middleware de gestion d'erreurs
 app.use((err, req, res, next) => {

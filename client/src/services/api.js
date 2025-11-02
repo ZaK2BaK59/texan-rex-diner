@@ -28,12 +28,25 @@ export const authAPI = {
   getProfile: () => api.get('/auth/me')
 };
 
-// Services des ventes
+
+
+// Services des ventes - AJOUTER
 export const salesAPI = {
   createSale: (saleData) => api.post('/sales', saleData),
   getMySales: () => api.get('/sales/my-sales'),
   getAllSales: () => api.get('/sales'),
+  updateSale: (id, saleData) => api.put(`/sales/${id}`, saleData), // ← NOUVEAU
+  deleteSale: (id) => api.delete(`/sales/${id}`), // ← NOUVEAU
   weeklyReset: () => api.delete('/sales/weekly-reset')
+};
+
+// Services des commandes - NOUVEAU
+export const ordersAPI = {
+  createOrder: (orderData) => api.post('/orders', orderData),
+  getMyOrders: () => api.get('/orders/my-orders'),
+  getAllOrders: () => api.get('/orders'),
+  deleteOrder: (id) => api.delete(`/orders/${id}`),
+  weeklyResetOrders: () => api.delete('/orders/weekly-reset')
 };
 
 // Services des utilisateurs
