@@ -43,20 +43,28 @@ const AdminDashboard = () => {
         setSales([]);
         setEmployeeStats([]);
         alert('✅ Reset hebdomadaire effectué avec succès !');
+        fetchData();
       } catch (error) {
+        console.error('Erreur reset:', error);
         setError('Erreur lors du reset');
       }
     }
   };
 
   const handleUserUpdate = () => {
-    fetchData(); // Recharger les données après modification
+    fetchData();
   };
 
   if (loading) return <div className="loading">Chargement...</div>;
 
-  const totalSales = sales.reduce((sum, sale) => sum + sale.price, 0);
-  const totalBonus = sales.reduce((sum, sale) => sum + sale.bonusAmount, 0);
+  // Calculer les totaux correctement
+  const totalSales = sales.reduce((sum, sale) => {
+    // Utiliser totalPrice si disponible, sinon calculer unitPrice * quantity
+    const saleTotal = sale.totalPrice || (sale.unitPrice * sale.quantity) || sale.price || 0;
+    return sum + saleTotal;
+  }, 0);
+  
+  const totalBonus = sales.reduce((sum, sale) => sum + (sale.bonusAmount || 0), 0);
 
   return (
     <div className="dashboard">
@@ -132,7 +140,12 @@ const AdminDashboard = () => {
           {activeTab === 'sales' && (
             <div className="card">
               <h2>Toutes les ventes</h2>
-              <SalesList sales={sales} showEmployee={true} />
+              <SalesList 
+                sales={sales} 
+                showEmployee={true} 
+                onSaleUpdate={fetchData}
+                currentUser={user}
+              />
             </div>
           )}
 

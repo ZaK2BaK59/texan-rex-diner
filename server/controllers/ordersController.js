@@ -104,9 +104,10 @@ const deleteOrder = async (req, res) => {
 const weeklyResetOrders = async (req, res) => {
   try {
     const result = await Order.deleteMany({});
-    res.json({ success: true, message: `Reset effectué - ${result.deletedCount} commandes supprimées` });
+    res.json({ success: true, message: `Reset commandes effectué - ${result.deletedCount} commandes supprimées` });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur lors du reset' });
+    console.error('Erreur lors du reset des commandes:', error);
+    res.status(500).json({ success: false, message: 'Erreur lors du reset des commandes' });
   }
 };
 

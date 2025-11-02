@@ -1,31 +1,31 @@
 import React, { useState } from 'react';
 import { salesAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { calculateBonus, formatCurrency } from '../utils/auth';
+import { formatCurrency } from '../utils/auth';
 
-// Menu des produits prédéfinis
 const MENU_ITEMS = [
-  { name: "Smoky Grandma's Chicken", price: 1000, category: "Plats" },
-  { name: "Pulled Pork Sandwich Deluxe", price: 1000, category: "Plats" },
-  { name: "Texas Brisket Smokehouse", price: 1000, category: "Plats" },
-  { name: "Route 66 Ribs", price: 1100, category: "Plats" },
-  { name: "Grilled Chicken Ranchero", price: 1100, category: "Plats" },
-  { name: "Cowboy Steak & Onion", price: 1200, category: "Plats" },
-  { name: "Brownie Maison", price: 300, category: "Desserts" },
-  { name: "Donuts Speculos Caramel", price: 300, category: "Desserts" },
-  { name: "Muffin Poire Chocolat", price: 400, category: "Desserts" },
-  { name: "La Double P (Tarte Pomme & Poire)", price: 400, category: "Desserts" },
-  { name: "Grandma's Coffee", price: 200, category: "Boissons" },
-  { name: "Diabolo Plaisir", price: 500, category: "Boissons" },
-  { name: "Pastèque Juice", price: 500, category: "Boissons" },
-  { name: "Smoothie Exotique", price: 500, category: "Boissons" }
+  { name: "🍗 Smoky Grandma's Chicken", price: 1000, category: "🥩 Plats" },
+  { name: "🥪 Pulled Pork Sandwich Deluxe", price: 1000, category: "🥩 Plats" },
+  { name: "🍖 Texas Brisket Smokehouse", price: 1000, category: "🥩 Plats" },
+  { name: "🍖 Route 66 Ribs", price: 1100, category: "🥩 Plats" },
+  { name: "🍗 Grilled Chicken Ranchero", price: 1100, category: "🥩 Plats" },
+  { name: "🥩 Cowboy Steak & Onion", price: 1200, category: "🥩 Plats" },
+  { name: "🍫 Brownie Maison", price: 300, category: "🍰 Desserts" },
+  { name: "🍩 Donuts Speculos Caramel", price: 300, category: "🍰 Desserts" },
+  { name: "🧁 Muffin Poire Chocolat", price: 400, category: "🍰 Desserts" },
+  { name: "🥧 La Double P (Tarte Pomme & Poire)", price: 400, category: "🍰 Desserts" },
+  { name: "☕ Grandma's Coffee", price: 200, category: "🥤 Boissons" },
+  { name: "🥤 Diabolo Plaisir", price: 500, category: "🥤 Boissons" },
+  { name: "🍉 Pastèque Juice", price: 500, category: "🥤 Boissons" },
+  { name: "🥤 Smoothie Exotique", price: 500, category: "🥤 Boissons" }
 ];
 
 const SaleForm = ({ onSaleAdded }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
     productName: '',
-    price: '',
+    unitPrice: '',
+    quantity: 1,
     isCustom: false
   });
   const [loading, setLoading] = useState(false);
@@ -37,7 +37,8 @@ const SaleForm = ({ onSaleAdded }) => {
     if (selectedValue === 'custom') {
       setFormData({
         productName: '',
-        price: '',
+        unitPrice: '',
+        quantity: 1,
         isCustom: true
       });
     } else if (selectedValue) {
@@ -48,14 +49,16 @@ const SaleForm = ({ onSaleAdded }) => {
       if (selectedItem) {
         setFormData({
           productName: selectedItem.name,
-          price: selectedItem.price.toString(),
+          unitPrice: selectedItem.price.toString(),
+          quantity: 1,
           isCustom: false
         });
       }
     } else {
       setFormData({
         productName: '',
-        price: '',
+        unitPrice: '',
+        quantity: 1,
         isCustom: false
       });
     }
@@ -76,11 +79,12 @@ const SaleForm = ({ onSaleAdded }) => {
     try {
       const response = await salesAPI.createSale({
         productName: formData.productName,
-        price: parseFloat(formData.price)
+        unitPrice: parseFloat(formData.unitPrice),
+        quantity: parseInt(formData.quantity)
       });
       
       onSaleAdded(response.data.sale);
-      setFormData({ productName: '', price: '', isCustom: false });
+      setFormData({ productName: '', unitPrice: '', quantity: 1, isCustom: false });
       
     } catch (error) {
       setError(error.response?.data?.message || 'Erreur lors de l\'ajout de la vente');
@@ -89,10 +93,16 @@ const SaleForm = ({ onSaleAdded }) => {
     }
   };
 
-  const previewBonus = formData.price ? 
-    calculateBonus(parseFloat(formData.price), user.role) : 0;
+  const getTotalPrice = () => {
+    return formData.unitPrice && formData.quantity ? 
+      parseFloat(formData.unitPrice) * parseInt(formData.quantity) : 0;
+  };
 
-  // Grouper les items par catégorie
+  const getEstimatedBonus = () => {
+    const total = getTotalPrice();
+    return total ? (total * user.bonusPercentage) / 100 : 0;
+  };
+
   const menuByCategory = MENU_ITEMS.reduce((acc, item) => {
     if (!acc[item.category]) acc[item.category] = [];
     acc[item.category].push(item);
@@ -109,8 +119,7 @@ const SaleForm = ({ onSaleAdded }) => {
           id="productSelect"
           onChange={handleProductSelect}
           value={formData.isCustom ? 'custom' : 
-                 formData.productName ? `${formData.productName}-${formData.price}` : ''}
-          className="product-select"
+                 formData.productName ? `${formData.productName}-${formData.unitPrice}` : ''}
         >
           <option value="">-- Choisir un produit --</option>
           
@@ -133,40 +142,57 @@ const SaleForm = ({ onSaleAdded }) => {
       
       {(formData.isCustom || !formData.productName) && (
         <div className="form-group">
-          <label htmlFor="productName">
-            {formData.isCustom ? 'Nom du produit personnalisé' : 'Ou saisir manuellement'}
-          </label>
+          <label htmlFor="productName">Nom du produit</label>
           <input
             type="text"
             id="productName"
             name="productName"
             value={formData.productName}
             onChange={handleChange}
-            required={formData.isCustom}
+            required
             placeholder="Ex: Burger spécial, Menu du jour..."
           />
         </div>
       )}
       
-      <div className="form-group">
-        <label htmlFor="price">Prix ($ Dollars FiveM)</label>
-        <input
-          type="number"
-          id="price"
-          name="price"
-          value={formData.price}
-          onChange={handleChange}
-          required
-          min="0"
-          step="1"
-          placeholder="0"
-          readOnly={!formData.isCustom && formData.productName}
-        />
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="unitPrice">Prix unitaire ($)</label>
+          <input
+            type="number"
+            id="unitPrice"
+            name="unitPrice"
+            value={formData.unitPrice}
+            onChange={handleChange}
+            required
+            min="0"
+            step="1"
+            readOnly={!formData.isCustom && formData.productName}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="quantity">Quantité</label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            value={formData.quantity}
+            onChange={handleChange}
+            required
+            min="1"
+          />
+        </div>
       </div>
       
-      {formData.price && (
-        <div className="bonus-preview">
-          💰 Prime estimée: {formatCurrency(previewBonus)} ({user.bonusPercentage}%)
+      {getTotalPrice() > 0 && (
+        <div className="sale-preview">
+          <div className="total-price">
+            💵 Total: {formatCurrency(getTotalPrice())}
+          </div>
+          <div className="estimated-bonus">
+            💰 Prime estimée: {formatCurrency(getEstimatedBonus())} ({user.bonusPercentage}%)
+          </div>
         </div>
       )}
       

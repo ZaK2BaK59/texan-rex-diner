@@ -6,12 +6,26 @@ const User = require('../models/User');
 // @access  Private
 const createSale = async (req, res) => {
   try {
-    const { productName, price } = req.body;
+    const { productName, unitPrice, quantity = 1 } = req.body;
+    
+    // Calculer directement ici (plus fiable que pre-save)
+    const parsedUnitPrice = parseFloat(unitPrice);
+    const parsedQuantity = parseInt(quantity);
+    const totalPrice = parsedUnitPrice * parsedQuantity;
+    
+    // Récupérer l'employé pour le bonus
+    const employee = await User.findById(req.user._id);
+    const bonusPercentage = employee.getBonusPercentage();
+    const bonusAmount = (totalPrice * bonusPercentage) / 100;
     
     const sale = new Sale({
       employeeId: req.user._id,
       productName,
-      price
+      unitPrice: parsedUnitPrice,
+      quantity: parsedQuantity,
+      totalPrice: totalPrice,           // ← Calculé ici
+      bonusPercentage: bonusPercentage, // ← Calculé ici
+      bonusAmount: bonusAmount          // ← Calculé ici
     });
     
     await sale.save();
@@ -19,6 +33,7 @@ const createSale = async (req, res) => {
     
     res.status(201).json({ success: true, message: 'Vente ajoutée', sale });
   } catch (error) {
+    console.error('Erreur création vente:', error);
     res.status(500).json({ success: false, message: 'Erreur lors de l\'ajout de la vente' });
   }
 };
@@ -56,18 +71,79 @@ const getAllSales = async (req, res) => {
           salesCount: 0
         };
       }
-      employeeStats[empId].totalSales += sale.price;
+      employeeStats[empId].totalSales += sale.totalPrice;
       employeeStats[empId].totalBonus += sale.bonusAmount;
       employeeStats[empId].salesCount += 1;
     });
     
     res.json({ success: true, sales, employeeStats: Object.values(employeeStats) });
   } catch (error) {
+    console.error('Erreur getAllSales:', error);
     res.status(500).json({ success: false, message: 'Erreur lors de la récupération des ventes' });
   }
 };
 
-// @desc    Reset hebdomadaire - Supprimer toutes les ventes (Admin seulement)
+const updateSale = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { productName, unitPrice, quantity } = req.body;
+    
+    const sale = await Sale.findById(id);
+    
+    if (!sale) {
+      return res.status(404).json({ success: false, message: 'Vente non trouvée' });
+    }
+    
+    // Vérifier les permissions
+    if (sale.employeeId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' });
+    }
+    
+    // Mettre à jour les champs
+    if (productName) sale.productName = productName;
+    if (unitPrice) sale.unitPrice = parseFloat(unitPrice);
+    if (quantity) sale.quantity = parseInt(quantity);
+    
+    // Recalculer le total et bonus
+    sale.totalPrice = sale.unitPrice * sale.quantity;
+    
+    const employee = await User.findById(sale.employeeId);
+    sale.bonusPercentage = employee.getBonusPercentage();
+    sale.bonusAmount = (sale.totalPrice * sale.bonusPercentage) / 100;
+    
+    await sale.save();
+    await sale.populate('employeeId', 'firstName lastName username role');
+    
+    res.json({ success: true, message: 'Vente modifiée', sale });
+  } catch (error) {
+    console.error('Erreur modification:', error);
+    res.status(500).json({ success: false, message: 'Erreur lors de la modification' });
+  }
+};
+// @desc    Supprimer une vente
+// @route   DELETE /api/sales/:id
+// @access  Private
+const deleteSale = async (req, res) => {
+  try {
+    const sale = await Sale.findById(req.params.id);
+    
+    if (!sale) {
+      return res.status(404).json({ success: false, message: 'Vente non trouvée' });
+    }
+    
+    // Vérifier les permissions
+    if (sale.employeeId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+      return res.status(403).json({ success: false, message: 'Non autorisé' });
+    }
+    
+    await Sale.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Vente supprimée' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur lors de la suppression' });
+  }
+};
+
+// @desc    Reset hebdomadaire
 // @route   DELETE /api/sales/weekly-reset
 // @access  Private/Admin
 const weeklyReset = async (req, res) => {
@@ -75,74 +151,9 @@ const weeklyReset = async (req, res) => {
     const result = await Sale.deleteMany({});
     res.json({ success: true, message: `Reset effectué - ${result.deletedCount} ventes supprimées` });
   } catch (error) {
+    console.error('Erreur reset:', error);
     res.status(500).json({ success: false, message: 'Erreur lors du reset' });
   }
 };
 
-
-// @desc    Modifier une vente
-// @route   PUT /api/sales/:id
-// @access  Private (propriétaire ou admin)
-const updateSale = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { productName, price } = req.body;
-    
-    const sale = await Sale.findById(id);
-    
-    if (!sale) {
-      return res.status(404).json({ success: false, message: 'Vente non trouvée' });
-    }
-    
-    // Vérifier les permissions (propriétaire ou admin)
-    if (sale.employeeId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Non autorisé à modifier cette vente' });
-    }
-    
-    // Mettre à jour
-    sale.productName = productName || sale.productName;
-    sale.price = price || sale.price;
-    
-    // Recalculer la prime si le prix a changé
-    if (price) {
-      const employee = await User.findById(sale.employeeId);
-      sale.bonusPercentage = employee.getBonusPercentage();
-      sale.bonusAmount = (sale.price * sale.bonusPercentage) / 100;
-    }
-    
-    await sale.save();
-    await sale.populate('employeeId', 'firstName lastName username role');
-    
-    res.json({ success: true, message: 'Vente modifiée', sale });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur lors de la modification' });
-  }
-};
-
-// @desc    Supprimer une vente
-// @route   DELETE /api/sales/:id
-// @access  Private (propriétaire ou admin)
-const deleteSale = async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const sale = await Sale.findById(id);
-    
-    if (!sale) {
-      return res.status(404).json({ success: false, message: 'Vente non trouvée' });
-    }
-    
-    // Vérifier les permissions (propriétaire ou admin)
-    if (sale.employeeId.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ success: false, message: 'Non autorisé à supprimer cette vente' });
-    }
-    
-    await Sale.findByIdAndDelete(id);
-    
-    res.json({ success: true, message: 'Vente supprimée' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Erreur lors de la suppression' });
-  }
-};
-
-module.exports = { createSale, getMySales, getAllSales, weeklyReset, updateSale, deleteSale };
+module.exports = { createSale, getMySales, getAllSales, updateSale, deleteSale, weeklyReset };

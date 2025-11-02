@@ -40,14 +40,7 @@ export const salesAPI = {
   weeklyReset: () => api.delete('/sales/weekly-reset')
 };
 
-// Services des commandes - NOUVEAU
-export const ordersAPI = {
-  createOrder: (orderData) => api.post('/orders', orderData),
-  getMyOrders: () => api.get('/orders/my-orders'),
-  getAllOrders: () => api.get('/orders'),
-  deleteOrder: (id) => api.delete(`/orders/${id}`),
-  weeklyResetOrders: () => api.delete('/orders/weekly-reset')
-};
+
 
 // Services des utilisateurs
 export const usersAPI = {

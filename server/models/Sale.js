@@ -11,14 +11,20 @@ const SaleSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  price: {
+  unitPrice: {
     type: Number,
     required: true,
     min: 0
   },
-  saleDate: {
-    type: Date,
-    default: Date.now
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1
+  },
+  totalPrice: {
+    type: Number,
+    required: true
   },
   bonusAmount: {
     type: Number,
@@ -27,30 +33,14 @@ const SaleSchema = new mongoose.Schema({
   bonusPercentage: {
     type: Number,
     default: 30
+  },
+  saleDate: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
 });
 
-// Calculer automatiquement le bonus avant de sauvegarder
-SaleSchema.pre('save', async function(next) {
-  if (this.isNew || this.isModified('price')) {
-    try {
-      const User = require('./User');
-      const employee = await User.findById(this.employeeId);
-      
-      if (employee) {
-        this.bonusPercentage = employee.getBonusPercentage();
-        this.bonusAmount = (this.price * this.bonusPercentage) / 100;
-      }
-      
-      next();
-    } catch (error) {
-      next(error);
-    }
-  } else {
-    next();
-  }
-});
-
+// Plus de pre-save hook compliqué !
 module.exports = mongoose.model('Sale', SaleSchema);

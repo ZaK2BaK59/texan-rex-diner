@@ -4,14 +4,15 @@ import { formatCurrency, formatDate } from '../utils/auth';
 
 const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) => {
   const [editingSale, setEditingSale] = useState(null);
-  const [editForm, setEditForm] = useState({ productName: '', price: '' });
+  const [editForm, setEditForm] = useState({ productName: '', unitPrice: '', quantity: 1 });
   const [loading, setLoading] = useState(false);
 
   const handleEdit = (sale) => {
     setEditingSale(sale._id);
     setEditForm({
       productName: sale.productName,
-      price: sale.price
+      unitPrice: sale.unitPrice,
+      quantity: sale.quantity
     });
   };
 
@@ -47,11 +48,7 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
   };
 
   if (sales.length === 0) {
-    return (
-      <div className="no-data">
-        📝 Aucune vente enregistrée
-      </div>
-    );
+    return <div className="no-data">📝 Aucune vente enregistrée</div>;
   }
 
   return (
@@ -60,7 +57,6 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
         {sales.map((sale) => (
           <div key={sale._id} className="sale-item">
             {editingSale === sale._id ? (
-              // Mode édition
               <div className="edit-sale-form">
                 <input
                   type="text"
@@ -68,34 +64,39 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
                   onChange={(e) => setEditForm({...editForm, productName: e.target.value})}
                   placeholder="Nom du produit"
                 />
-                <input
-                  type="number"
-                  value={editForm.price}
-                  onChange={(e) => setEditForm({...editForm, price: e.target.value})}
-                  placeholder="Prix"
-                />
+                <div className="edit-row">
+                  <input
+                    type="number"
+                    value={editForm.unitPrice}
+                    onChange={(e) => setEditForm({...editForm, unitPrice: e.target.value})}
+                    placeholder="Prix unitaire"
+                  />
+                  <input
+                    type="number"
+                    value={editForm.quantity}
+                    onChange={(e) => setEditForm({...editForm, quantity: e.target.value})}
+                    placeholder="Quantité"
+                    min="1"
+                  />
+                </div>
                 <div className="edit-actions">
-                  <button 
-                    onClick={() => handleSaveEdit(sale._id)}
-                    disabled={loading}
-                    className="save-btn"
-                  >
+                  <button onClick={() => handleSaveEdit(sale._id)} disabled={loading} className="save-btn">
                     ✅ Sauver
                   </button>
-                  <button 
-                    onClick={() => setEditingSale(null)}
-                    className="cancel-btn"
-                  >
+                  <button onClick={() => setEditingSale(null)} className="cancel-btn">
                     ❌ Annuler
                   </button>
                 </div>
               </div>
             ) : (
-              // Mode affichage normal
               <>
                 <div className="sale-header">
                   <h3>{sale.productName}</h3>
-                  <span className="sale-price">{formatCurrency(sale.price)}</span>
+                  <span className="sale-price">{formatCurrency(sale.totalPrice || sale.unitPrice * sale.quantity)}</span>
+                </div>
+                
+                <div className="sale-details">
+                  <span className="unit-price">{formatCurrency(sale.unitPrice)} x {sale.quantity}</span>
                 </div>
                 
                 {showEmployee && sale.employeeId && (
@@ -115,18 +116,10 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
 
                 {canModify(sale) && (
                   <div className="sale-actions">
-                    <button 
-                      onClick={() => handleEdit(sale)}
-                      className="edit-btn"
-                      disabled={loading}
-                    >
+                    <button onClick={() => handleEdit(sale)} className="edit-btn" disabled={loading}>
                       ✏️ Modifier
                     </button>
-                    <button 
-                      onClick={() => handleDelete(sale._id)}
-                      className="delete-btn"
-                      disabled={loading}
-                    >
+                    <button onClick={() => handleDelete(sale._id)} className="delete-btn" disabled={loading}>
                       🗑️ Supprimer
                     </button>
                   </div>
