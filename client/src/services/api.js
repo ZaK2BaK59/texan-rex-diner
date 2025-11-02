@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://texan-rexs-diner.onrender.com/api'  // ← TON vrai backend qui fonctionne !
+  ? 'https://texan-rexs-diner.onrender.com'  // ← TON vrai backend qui fonctionne !
   : 'http://localhost:5000/api';
 
 // Configuration axios
