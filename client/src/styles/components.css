@@ -706,3 +706,28 @@
     font-size: 2rem;
   }
 }
+
+/* Ventes supprimées (visibles admin seulement) */
+.deleted-sale {
+  opacity: 0.6;
+  border: 2px dashed var(--texas-red) !important;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--desert-sand),
+    var(--desert-sand) 10px,
+    rgba(139, 0, 0, 0.1) 10px,
+    rgba(139, 0, 0, 0.1) 20px
+  ) !important;
+}
+
+.deleted-banner {
+  background: var(--texas-red);
+  color: white;
+  padding: 8px;
+  border-radius: var(--border-radius);
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}

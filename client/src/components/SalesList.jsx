@@ -30,7 +30,7 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
   };
 
   const handleDelete = async (saleId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette vente ?')) {
+    if (window.confirm('Êtes-vous sûr de vouloir masquer cette vente ?')) {
       setLoading(true);
       try {
         await salesAPI.deleteSale(saleId);
@@ -44,6 +44,8 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
   };
 
   const canModify = (sale) => {
+    // Ne peut pas modifier une vente supprimée
+    if (sale.isDeleted) return false;
     return currentUser?.isAdmin || sale.employeeId._id === currentUser?.id || sale.employeeId === currentUser?.id;
   };
 
@@ -55,7 +57,14 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
     <div className="sales-list">
       <div className="sales-grid">
         {sales.map((sale) => (
-          <div key={sale._id} className="sale-item">
+          <div key={sale._id} className={`sale-item ${sale.isDeleted ? 'deleted-sale' : ''}`}>
+            {sale.isDeleted && (
+              <div className="deleted-banner">
+                🗑️ SUPPRIMÉE {sale.deletedBy && `par ${sale.deletedBy.firstName}`}
+                <br />📅 {formatDate(sale.deletedAt)}
+              </div>
+            )}
+            
             {editingSale === sale._id ? (
               <div className="edit-sale-form">
                 <input
@@ -120,7 +129,7 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
                       ✏️ Modifier
                     </button>
                     <button onClick={() => handleDelete(sale._id)} className="delete-btn" disabled={loading}>
-                      🗑️ Supprimer
+                      🗑️ Masquer
                     </button>
                   </div>
                 )}

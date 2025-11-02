@@ -17,6 +17,32 @@ router.post('/', createSale);
 // @access  Private
 router.get('/my-sales', getMySales);
 
+// ============================================
+// ROUTES SPÉCIFIQUES EN PREMIER (IMPORTANT!)
+// ============================================
+
+// @route   DELETE /api/sales/weekly-reset
+// @desc    Reset hebdomadaire
+// @access  Private/Admin
+router.delete('/weekly-reset', adminAuth, (req, res, next) => {
+  console.log('🛣️ ===== ROUTE WEEKLY-RESET APPELÉE =====');
+  console.log('🛣️ Method:', req.method);
+  console.log('🛣️ URL:', req.url);
+  console.log('🛣️ User:', req.user?.username);
+  console.log('🛣️ Passage à weeklyReset...');
+  next();
+}, weeklyReset);
+
+// Routes admin
+// @route   GET /api/sales
+// @desc    Toutes les ventes (Admin)
+// @access  Private/Admin
+router.get('/', adminAuth, getAllSales);
+
+// ============================================
+// ROUTES AVEC PARAMÈTRES EN DERNIER
+// ============================================
+
 // @route   PUT /api/sales/:id
 // @desc    Modifier une vente
 // @access  Private
@@ -26,9 +52,5 @@ router.put('/:id', updateSale);
 // @desc    Supprimer une vente
 // @access  Private
 router.delete('/:id', deleteSale);
-
-// Routes admin seulement
-router.get('/', adminAuth, getAllSales);
-router.delete('/weekly-reset', adminAuth, weeklyReset);
 
 module.exports = router;

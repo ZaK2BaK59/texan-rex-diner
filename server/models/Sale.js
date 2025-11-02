@@ -37,10 +37,22 @@ const SaleSchema = new mongoose.Schema({
   saleDate: {
     type: Date,
     default: Date.now
+  },
+  isDeleted: {           // ← NOUVEAU CHAMP
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {           // ← NOUVEAU CHAMP
+    type: Date,
+    default: null
+  },
+  deletedBy: {           // ← NOUVEAU CHAMP
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true
 });
 
-// Plus de pre-save hook compliqué !
 module.exports = mongoose.model('Sale', SaleSchema);
