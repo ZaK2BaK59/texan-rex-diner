@@ -40,9 +40,9 @@ const Login = () => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>🤠 Texan Rex's Diner</h1>
-          <p>Connexion employé</p>
-        </div>
+  <h1>🤠 Connexion Employés</h1>
+  <p>Texan Rex's Diner - Espace Staff</p>
+</div>
         
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}

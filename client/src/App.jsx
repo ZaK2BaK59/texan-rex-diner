@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import PublicOrderPage from './pages/PublicOrderPage'; // ← NOUVEAU
 import './styles/App.css';
 import './styles/components.css';
 
@@ -26,8 +27,8 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   return children;
 };
 
-// Composant pour rediriger si déjà connecté
-const PublicRoute = ({ children }) => {
+// Composant pour rediriger si déjà connecté (SEULEMENT depuis /login)
+const LoginRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
   if (loading) {
@@ -46,15 +47,20 @@ function AppRoutes() {
     <Router>
       <div className="App">
         <Routes>
+          {/* PAGE PUBLIQUE DE COMMANDE (ACCUEIL) */}
+          <Route path="/" element={<PublicOrderPage />} />
+          
+          {/* CONNEXION EMPLOYÉS */}
           <Route 
             path="/login" 
             element={
-              <PublicRoute>
+              <LoginRoute>
                 <Login />
-              </PublicRoute>
+              </LoginRoute>
             } 
           />
           
+          {/* DASHBOARD EMPLOYÉ */}
           <Route 
             path="/dashboard" 
             element={
@@ -64,6 +70,7 @@ function AppRoutes() {
             } 
           />
           
+          {/* DASHBOARD ADMIN */}
           <Route 
             path="/admin" 
             element={
@@ -73,8 +80,8 @@ function AppRoutes() {
             } 
           />
           
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* ROUTES INCONNUES → ACCUEIL */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>

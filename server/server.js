@@ -37,6 +37,10 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/sales', require('./routes/sales'));
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/sales', require('./routes/sales'));
+app.use('/api/client-orders', require('./routes/clientOrders')); // ← AJOUTER
 // app.use('/api/orders', require('./routes/orders')); // ← SUPPRIMER CETTE LIGNE !
 
 // Middleware de gestion d'erreurs
