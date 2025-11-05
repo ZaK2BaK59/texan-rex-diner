@@ -9,7 +9,7 @@ export const roles = {
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
-    currency: 'EUR'
+    currency: 'USD'
   }).format(amount);
 };
 
