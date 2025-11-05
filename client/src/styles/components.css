@@ -731,3 +731,105 @@
   margin-bottom: 1rem;
   text-transform: uppercase;
 }
+
+/* En-tête des ventes avec totaux */
+.sales-header {
+  margin-bottom: 1.5rem;
+}
+
+.sales-totals {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--wood-gradient);
+  border-radius: var(--border-radius);
+  border: 2px solid var(--leather-dark);
+}
+
+.total-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.total-label {
+  color: var(--cream-white);
+  font-size: 0.9rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.total-value {
+  color: var(--campfire-yellow);
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Footer avec totaux */
+.sales-footer {
+  margin-top: 1.5rem;
+  border-top: 3px solid var(--whiskey-amber);
+  padding-top: 1rem;
+}
+
+.footer-totals {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--western-sunset);
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  color: white;
+  border: 2px solid var(--leather-dark);
+  box-shadow: var(--deep-shadow);
+}
+
+.footer-total, .footer-bonus {
+  font-size: 1.1rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.footer-bonus {
+  color: var(--campfire-yellow);
+}
+
+/* Bouton masquer au lieu de supprimer */
+.hide-btn {
+  background: var(--whiskey-amber);
+  color: var(--leather-dark);
+  border: 2px solid var(--leather-dark);
+  padding: 6px 12px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-family: var(--western-font);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hide-btn:hover {
+  background: var(--burnt-orange);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--fire-glow);
+}
+
+/* Responsive pour les totaux */
+@media (max-width: 768px) {
+  .sales-totals {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .footer-totals {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}

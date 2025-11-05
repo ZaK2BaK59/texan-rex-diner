@@ -38,20 +38,28 @@ const createSale = async (req, res) => {
   }
 };
 
-// @desc    Obtenir les ventes de l'employé connecté (SANS les supprimées)
+// @desc    Obtenir les ventes de l'employé connecté (SANS les masquées)
 // @route   GET /api/sales/my-sales
 // @access  Private
 const getMySales = async (req, res) => {
   try {
-    // Employé voit seulement ses ventes NON supprimées
+    // Employé voit seulement ses ventes NON masquées
     const sales = await Sale.find({ 
       employeeId: req.user._id,
-      isDeleted: false  // ← Filtrer les supprimées
+      isDeleted: false  // ← Filtrer les masquées
     }).sort({ createdAt: -1 });
     
-    const totalBonus = sales.reduce((total, sale) => total + sale.bonusAmount, 0);
+    // Calculer le total SEULEMENT des ventes visibles
+    const totalSales = sales.reduce((sum, sale) => sum + (sale.totalPrice || 0), 0);
+    const totalBonus = sales.reduce((sum, sale) => sum + (sale.bonusAmount || 0), 0);
     
-    res.json({ success: true, sales, totalBonus });
+    res.json({ 
+      success: true, 
+      sales, 
+      totalSales,    // ← NOUVEAU
+      totalBonus,
+      count: sales.length
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Erreur lors de la récupération des ventes' });
   }

@@ -21,7 +21,7 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
     try {
       await salesAPI.updateSale(saleId, editForm);
       setEditingSale(null);
-      onSaleUpdate && onSaleUpdate();
+      onSaleUpdate && onSaleUpdate(); // Recharge les données + totaux
     } catch (error) {
       alert('Erreur lors de la modification');
     } finally {
@@ -30,13 +30,17 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
   };
 
   const handleDelete = async (saleId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir masquer cette vente ?')) {
+    const message = showEmployee ? 
+      'Êtes-vous sûr de vouloir masquer cette vente ?' : 
+      'Masquer cette vente ? (Elle disparaîtra de votre total)';
+      
+    if (window.confirm(message)) {
       setLoading(true);
       try {
         await salesAPI.deleteSale(saleId);
-        onSaleUpdate && onSaleUpdate();
+        onSaleUpdate && onSaleUpdate(); // Recharge tout + recalcule les totaux
       } catch (error) {
-        alert('Erreur lors de la suppression');
+        alert('Erreur lors du masquage');
       } finally {
         setLoading(false);
       }
@@ -44,13 +48,19 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
   };
 
   const canModify = (sale) => {
-    // Ne peut pas modifier une vente supprimée
+    // Ne peut pas modifier une vente masquée
     if (sale.isDeleted) return false;
     return currentUser?.isAdmin || sale.employeeId._id === currentUser?.id || sale.employeeId === currentUser?.id;
   };
 
   if (sales.length === 0) {
-    return <div className="no-data">📝 Aucune vente enregistrée</div>;
+    return (
+      <div className="no-data">
+        🥩 Aucune vente pour aujourd'hui
+        <br />
+        <small>Ajoute tes premières ventes cowboy ! 🤠</small>
+      </div>
+    );
   }
 
   return (
@@ -58,14 +68,17 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
       <div className="sales-grid">
         {sales.map((sale) => (
           <div key={sale._id} className={`sale-item ${sale.isDeleted ? 'deleted-sale' : ''}`}>
-            {sale.isDeleted && (
+            
+            {/* Bannière pour ventes masquées (vue admin) */}
+            {sale.isDeleted && showEmployee && (
               <div className="deleted-banner">
-                🗑️ SUPPRIMÉE {sale.deletedBy && `par ${sale.deletedBy.firstName}`}
+                🗑️ MASQUÉE {sale.deletedBy && `par ${sale.deletedBy.firstName}`}
                 <br />📅 {formatDate(sale.deletedAt)}
               </div>
             )}
             
             {editingSale === sale._id ? (
+              // Mode édition
               <div className="edit-sale-form">
                 <input
                   type="text"
@@ -98,6 +111,7 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
                 </div>
               </div>
             ) : (
+              // Mode affichage normal
               <>
                 <div className="sale-header">
                   <h3>{sale.productName}</h3>
@@ -128,8 +142,8 @@ const SalesList = ({ sales, showEmployee = false, onSaleUpdate, currentUser }) =
                     <button onClick={() => handleEdit(sale)} className="edit-btn" disabled={loading}>
                       ✏️ Modifier
                     </button>
-                    <button onClick={() => handleDelete(sale._id)} className="delete-btn" disabled={loading}>
-                      🗑️ Masquer
+                    <button onClick={() => handleDelete(sale._id)} className="hide-btn" disabled={loading}>
+                      👁️‍🗨️ Masquer
                     </button>
                   </div>
                 )}

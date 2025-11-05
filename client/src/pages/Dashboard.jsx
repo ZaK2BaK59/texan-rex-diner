@@ -9,6 +9,7 @@ import { formatCurrency } from '../utils/auth';
 const Dashboard = () => {
   const { user } = useAuth();
   const [sales, setSales] = useState([]);
+  const [totalSales, setTotalSales] = useState(0);
   const [totalBonus, setTotalBonus] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,7 +22,8 @@ const Dashboard = () => {
     try {
       const response = await salesAPI.getMySales();
       setSales(response.data.sales);
-      setTotalBonus(response.data.totalBonus);
+      setTotalSales(response.data.totalSales || 0);  // ← NOUVEAU
+      setTotalBonus(response.data.totalBonus || 0);
     } catch (error) {
       setError('Erreur lors de la récupération des ventes');
     } finally {
@@ -31,7 +33,8 @@ const Dashboard = () => {
 
   const handleSaleAdded = (newSale) => {
     setSales([newSale, ...sales]);
-    setTotalBonus(totalBonus + newSale.bonusAmount);
+    setTotalSales(totalSales + (newSale.totalPrice || 0));
+    setTotalBonus(totalBonus + (newSale.bonusAmount || 0));
   };
 
   if (loading) return <div className="loading">Chargement...</div>;
@@ -46,7 +49,6 @@ const Dashboard = () => {
           <div className="user-info">
             <span className="role">Rôle: {user.role}</span>
             <span className="bonus-rate">Prime: {user.bonusPercentage}%</span>
-            <span className="total-bonus">Total primes: {formatCurrency(totalBonus)}</span>
           </div>
         </div>
 
@@ -54,18 +56,45 @@ const Dashboard = () => {
 
         <div className="dashboard-grid">
           <div className="card">
-            <h2>Nouvelle vente</h2>
+            <h2>🔥 Nouvelle vente</h2>
             <SaleForm onSaleAdded={handleSaleAdded} />
           </div>
           
           <div className="card">
-            <h2>Mes ventes ({sales.length})</h2>
+            <div className="sales-header">
+              <h2>🥩 Mes ventes ({sales.length})</h2>
+              
+              {/* TOTAUX EN HAUT */}
+              <div className="sales-totals">
+                <div className="total-item">
+                  <span className="total-label">💵 Total ventes:</span>
+                  <span className="total-value">{formatCurrency(totalSales)}</span>
+                </div>
+                <div className="total-item">
+                  <span className="total-label">💰 Total primes:</span>
+                  <span className="total-value">{formatCurrency(totalBonus)}</span>
+                </div>
+              </div>
+            </div>
+            
             <SalesList 
               sales={sales} 
               showEmployee={false} 
-              onSaleUpdate={fetchMySales}
+              onSaleUpdate={fetchMySales}  // ← Recharge tout après masquage
               currentUser={user}
             />
+            
+            {/* TOTAUX EN BAS AUSSI */}
+            <div className="sales-footer">
+              <div className="footer-totals">
+                <div className="footer-total">
+                  <strong>🔥 Total du jour: {formatCurrency(totalSales)}</strong>
+                </div>
+                <div className="footer-bonus">
+                  <strong>💰 Tes primes: {formatCurrency(totalBonus)}</strong>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
